@@ -6,6 +6,9 @@
 #include "DHT.h"
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <LiquidCrystal_I2C.h>
+
+LiquidCrystal_I2C lcd(0x27, 20, 4);
 
 MAX30105 particleSensor;
 
@@ -39,13 +42,13 @@ String ValueRoomHum;
 String ValueHeartRate;
 String ValueSpo2;
 
-#define DHTPIN 2 
+#define DHTPIN 4
 
 #define DHTTYPE DHT11  
 
 DHT dht(DHTPIN, DHTTYPE);
 
-#define ONE_WIRE_BUS 4
+#define ONE_WIRE_BUS 32
 
 // Setup a oneWire instance to communicate with any OneWire device
 OneWire oneWire(ONE_WIRE_BUS);  
@@ -70,6 +73,9 @@ unsigned long timerDelay = 5000;
 
 void setup() {
   Serial.begin(115200);
+  // initialize the LCD
+  lcd.begin(); //kalu error kat sini tukar begin jd init exp: lcd.init();
+  lcd.backlight();
   dht.begin();
   // Initialize sensor
   if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) //Use default I2C port, 400kHz speed
@@ -104,16 +110,39 @@ void setup() {
   Serial.println(WiFi.localIP());
  
   Serial.println("Timer set to 5 seconds (timerDelay variable), it will take 5 seconds before publishing the first reading.");
+
+  lcd.setCursor(3, 0);
+  lcd.print("HEALTH MONITOR");
+  lcd.setCursor(0, 1);
+  lcd.print("HR = ");
+  lcd.setCursor(10, 1);
+  lcd.print("SPO2 = ");
+  lcd.setCursor(0, 2);
+  lcd.print("RT = ");
+  lcd.setCursor(10, 2);
+  lcd.print("BT = ");
+  lcd.setCursor(0, 3);
+  lcd.print("RH = ");
 }
 
 void loop() {
   sensors.requestTemperatures(); 
-    
+
+  sensormax();
+
   valueHeartRate = heartRate;
   valueSpo2 = spo2;
   valueRoomTemp = dht.readTemperature();
   valueRoomHum = dht.readHumidity();
   valueBodyTemp = sensors.getTempCByIndex(0);
+
+  if (valueHeartRate <= 0){
+    valueHeartRate = 0;
+    }
+
+  if (valueSpo2 <= 0){
+    valueSpo2 = 0;
+    }
 
   ValueRoomTemp = String(valueRoomTemp);
   ValueBodyTemp = String(valueBodyTemp);
@@ -121,12 +150,38 @@ void loop() {
   ValueHeartRate = String(valueHeartRate);
   ValueSpo2 = String(valueSpo2);
 
+  lcd.setCursor(5, 1);
+  lcd.print("    ");
+  lcd.setCursor(5, 1);
+  lcd.print(ValueHeartRate);
+
+  lcd.setCursor(17, 1);
+  lcd.print("   ");
+  lcd.setCursor(17, 1);
+  lcd.print(ValueSpo2);
+
+  lcd.setCursor(5, 2);
+  lcd.print("    ");
+  lcd.setCursor(5, 2);
+  lcd.print(ValueRoomTemp);
+
+  lcd.setCursor(15, 2);
+  lcd.print("    ");
+  lcd.setCursor(15, 2);
+  lcd.print(ValueBodyTemp);
+
+  lcd.setCursor(5, 3);
+  lcd.print("    ");
+  lcd.setCursor(5, 3);
+  lcd.print(ValueRoomHum);
+
   PostData();
 }
 
 void sensormax (){
   bufferLength = 100; //buffer length of 100 stores 4 seconds of samples running at 25sps
 
+  for (int i = 0; i < 10; i++){
   //read the first 100 samples, and determine the signal range
   for (byte i = 0 ; i < bufferLength ; i++)
   {
@@ -146,9 +201,6 @@ void sensormax (){
   //calculate heart rate and SpO2 after first 100 samples (first 4 seconds of samples)
   maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spo2, &validSPO2, &heartRate, &validHeartRate);
 
-  //Continuously taking samples from MAX30102.  Heart rate and SpO2 are calculated every 1 second
-  while (1)
-  {
     //dumping the first 25 sets of samples in the memory and shift the last 75 sets of samples to the top
     for (byte i = 25; i < 100; i++)
     {
@@ -188,7 +240,7 @@ void sensormax (){
     //After gathering 25 new samples recalculate HR and SP02
     maxim_heart_rate_and_oxygen_saturation(irBuffer, bufferLength, redBuffer, &spo2, &validSPO2, &heartRate, &validHeartRate);
   }
-  }
+}
 
 
 void PostData(){
