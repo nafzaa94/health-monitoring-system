@@ -48,7 +48,7 @@ const char* ssid = "REPLACE_WITH_YOUR_SSID";
 const char* password = "REPLACE_WITH_YOUR_PASSWORD";
 
 //Your Domain name with URL path or IP address with path
-const char* serverName = "http://your-ip-address/api/updatedata";
+const char* serverName = "https://healthmonitoring.nafzasystem.online/api/updatedata";
 
 // the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
@@ -73,17 +73,6 @@ void setup() {
   lcd.backlight();
   dht.begin();
 
-  if (!pox.begin()) {
-        Serial.println("FAILED");
-        for(;;);
-    } else {
-        Serial.println("SUCCESS");
-    }
-  pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
- 
-  // Register a callback for the beat detection
-  pox.setOnBeatDetectedCallback(onBeatDetected);
-
   sensors.begin();  // Start up the library
 
   WiFi.begin(ssid, password);
@@ -95,6 +84,17 @@ void setup() {
   Serial.println("");
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
+
+  if (!pox.begin()) {
+        Serial.println("FAILED");
+        for(;;);
+    } else {
+        Serial.println("SUCCESS");
+    }
+  pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
+ 
+  // Register a callback for the beat detection
+  pox.setOnBeatDetectedCallback(onBeatDetected);
 
   lcd.setCursor(3, 0);
   lcd.print("HEALTH MONITOR");
@@ -112,68 +112,65 @@ void setup() {
 
 void loop() {
 
-    if (StartState == 1){
-      sensors.requestTemperatures(); 
-      sensormax();
-      valueHeartRate = heartRate;
-      valueSpo2 = spo2;
-      valueRoomTemp = dht.readTemperature();
-      valueRoomHum = dht.readHumidity();
-      valueBodyTemp = sensors.getTempCByIndex(0);
-    
-      ValueRoomTemp = String(valueRoomTemp);
-      ValueBodyTemp = String(valueBodyTemp);
-      ValueRoomHum = String(valueRoomHum);
-      ValueHeartRate = String(valueHeartRate);
-      ValueSpo2 = String(valueSpo2);
-    
-      lcd.setCursor(5, 1);
-      lcd.print("    ");
-      lcd.setCursor(5, 1);
-      lcd.print(ValueHeartRate);
-    
-      lcd.setCursor(17, 1);
-      lcd.print("   ");
-      lcd.setCursor(17, 1);
-      lcd.print(ValueSpo2);
-    
-      lcd.setCursor(5, 2);
-      lcd.print("    ");
-      lcd.setCursor(5, 2);
-      lcd.print(ValueRoomTemp);
-    
-      lcd.setCursor(15, 2);
-      lcd.print("    ");
-      lcd.setCursor(15, 2);
-      lcd.print(ValueBodyTemp);
-    
-      lcd.setCursor(5, 3);
-      lcd.print("    ");
-      lcd.setCursor(5, 3);
-      lcd.print(ValueRoomHum);
-    
-      PostData();
-    }
+      pox.update();
+      if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
+  
+          heartRate = pox.getHeartRate();
+          spo2 = pox.getSpO2();
+          Serial.print("Heart rate:");
+          Serial.print(pox.getHeartRate());
+          Serial.print("bpm / SpO2:");
+          Serial.print(pox.getSpO2());
+          Serial.println("%");
+   
+          tsLastReport = millis();
+      }
+
+      if (StartState == 1){
+          sensors.requestTemperatures();
+
+          valueHeartRate = heartRate;
+          valueSpo2 = spo2;
+          valueRoomTemp = dht.readTemperature();
+          valueRoomHum = dht.readHumidity();
+          valueBodyTemp = sensors.getTempCByIndex(0);
+        
+          ValueRoomTemp = String(valueRoomTemp);
+          ValueBodyTemp = String(valueBodyTemp);
+          ValueRoomHum = String(valueRoomHum);
+          ValueHeartRate = String(valueHeartRate);
+          ValueSpo2 = String(valueSpo2);
+        
+          lcd.setCursor(5, 1);
+          lcd.print("    ");
+          lcd.setCursor(5, 1);
+          lcd.print(ValueHeartRate);
+        
+          lcd.setCursor(17, 1);
+          lcd.print("   ");
+          lcd.setCursor(17, 1);
+          lcd.print(ValueSpo2);
+        
+          lcd.setCursor(5, 2);
+          lcd.print("    ");
+          lcd.setCursor(5, 2);
+          lcd.print(ValueRoomTemp);
+        
+          lcd.setCursor(15, 2);
+          lcd.print("    ");
+          lcd.setCursor(15, 2);
+          lcd.print(ValueBodyTemp);
+        
+          lcd.setCursor(5, 3);
+          lcd.print("    ");
+          lcd.setCursor(5, 3);
+          lcd.print(ValueRoomHum);
+        
+          PostData();
+          StartState = 0;
+        }
   
 }
-
-void sensormax (){
-      // Make sure to call update as fast as possible
-    pox.update();
-    if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-
-        heartRate = pox.getHeartRate();
-        spo2 = pox.getSpO2();
-        Serial.print("Heart rate:");
-        Serial.print(pox.getHeartRate());
-        Serial.print("bpm / SpO2:");
-        Serial.print(pox.getSpO2());
-        Serial.println("%");
- 
-        tsLastReport = millis();
-    }
-}
-
 
 void PostData(){
   //Send an HTTP POST request every 10 minutes
