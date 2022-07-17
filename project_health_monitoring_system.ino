@@ -117,9 +117,10 @@ void loop() {
 
         switch (Var) {
           case 1:
-            pox.update();
-            if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-        
+            
+            for (int i = 0; i <= 20; i++){
+                pox.update();
+                
                 heartRate = pox.getHeartRate();
                 spo2 = pox.getSpO2();
                 Serial.print("Heart rate:");
@@ -127,13 +128,9 @@ void loop() {
                 Serial.print("bpm / SpO2:");
                 Serial.print(pox.getSpO2());
                 Serial.println("%");
-         
-                tsLastReport = millis();
             }
 
-            if (StartState >= 10){
-              Var = 2;
-              }
+            Var = 2;
 
             
             break;
@@ -178,7 +175,6 @@ void loop() {
                 lcd.print(ValueRoomHum);
                   
                 PostData();
-                StartState = 0;
                 Var = 1;
             break;
         }
