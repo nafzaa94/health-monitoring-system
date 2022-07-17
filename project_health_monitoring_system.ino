@@ -63,7 +63,7 @@ int StartState = 0;
 void onBeatDetected()
 {
     Serial.println("Beat!");
-    StartState = 1;
+    StartState = 1 + 1;
 }
 
 void setup() {
@@ -126,7 +126,7 @@ void loop() {
           tsLastReport = millis();
       }
 
-      if (StartState == 1){
+      if (StartState >= 10){
           sensors.requestTemperatures();
 
           valueHeartRate = heartRate;
