@@ -48,7 +48,7 @@ const char* ssid = "REPLACE_WITH_YOUR_SSID";
 const char* password = "REPLACE_WITH_YOUR_PASSWORD";
 
 //Your Domain name with URL path or IP address with path
-const char* serverName = "https://healthmonitoring.nafzasystem.online/api/updatedata";
+const char* serverName = "http://healthmonitoring.nafzasystem.online/api/updatedata";
 
 // the following variables are unsigned longs because the time, measured in
 // milliseconds, will quickly become a bigger number than can be stored in an int.
@@ -126,6 +126,8 @@ void loop() {
           // Asynchronously dump heart rate and oxidation levels to the serial
           // For both, a value of 0 means "invalid"
           if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
+              heartRate = pox.getHeartRate();
+              spo2 = pox.getSpO2();
               Serial.print("Heart rate:");
               Serial.print(pox.getHeartRate());
               Serial.print("bpm / SpO2:");
@@ -135,7 +137,7 @@ void loop() {
               tsLastReport = millis();
           }
 
-          if (StartState > 10){
+          if (StartState > 4){
             Var = 2;
             }
             
