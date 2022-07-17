@@ -60,10 +60,13 @@ unsigned long timerDelay = 5000;
 
 int StartState = 0;
 
+int Var = 1;
+
 void onBeatDetected()
 {
     Serial.println("Beat!");
-    StartState = 1 + 1;
+    StartState = StartState + 1;
+    Serial.println(StartState);
 }
 
 void setup() {
@@ -112,62 +115,72 @@ void setup() {
 
 void loop() {
 
-      pox.update();
-      if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-  
-          heartRate = pox.getHeartRate();
-          spo2 = pox.getSpO2();
-          Serial.print("Heart rate:");
-          Serial.print(pox.getHeartRate());
-          Serial.print("bpm / SpO2:");
-          Serial.print(pox.getSpO2());
-          Serial.println("%");
-   
-          tsLastReport = millis();
-      }
+        switch (Var) {
+          case 1:
+            pox.update();
+            if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
+        
+                heartRate = pox.getHeartRate();
+                spo2 = pox.getSpO2();
+                Serial.print("Heart rate:");
+                Serial.print(pox.getHeartRate());
+                Serial.print("bpm / SpO2:");
+                Serial.print(pox.getSpO2());
+                Serial.println("%");
+         
+                tsLastReport = millis();
+            }
 
-      if (StartState >= 10){
-          sensors.requestTemperatures();
+            if (StartState >= 10){
+              Var = 2;
+              }
 
-          valueHeartRate = heartRate;
-          valueSpo2 = spo2;
-          valueRoomTemp = dht.readTemperature();
-          valueRoomHum = dht.readHumidity();
-          valueBodyTemp = sensors.getTempCByIndex(0);
-        
-          ValueRoomTemp = String(valueRoomTemp);
-          ValueBodyTemp = String(valueBodyTemp);
-          ValueRoomHum = String(valueRoomHum);
-          ValueHeartRate = String(valueHeartRate);
-          ValueSpo2 = String(valueSpo2);
-        
-          lcd.setCursor(5, 1);
-          lcd.print("    ");
-          lcd.setCursor(5, 1);
-          lcd.print(ValueHeartRate);
-        
-          lcd.setCursor(17, 1);
-          lcd.print("   ");
-          lcd.setCursor(17, 1);
-          lcd.print(ValueSpo2);
-        
-          lcd.setCursor(5, 2);
-          lcd.print("    ");
-          lcd.setCursor(5, 2);
-          lcd.print(ValueRoomTemp);
-        
-          lcd.setCursor(15, 2);
-          lcd.print("    ");
-          lcd.setCursor(15, 2);
-          lcd.print(ValueBodyTemp);
-        
-          lcd.setCursor(5, 3);
-          lcd.print("    ");
-          lcd.setCursor(5, 3);
-          lcd.print(ValueRoomHum);
-        
-          PostData();
-          StartState = 0;
+            
+            break;
+          case 2:
+                sensors.requestTemperatures();
+          
+                valueHeartRate = heartRate;
+                valueSpo2 = spo2;
+                valueRoomTemp = dht.readTemperature();
+                valueRoomHum = dht.readHumidity();
+                valueBodyTemp = sensors.getTempCByIndex(0);
+                 
+                ValueRoomTemp = String(valueRoomTemp);
+                ValueBodyTemp = String(valueBodyTemp);
+                ValueRoomHum = String(valueRoomHum);
+                ValueHeartRate = String(valueHeartRate);
+                ValueSpo2 = String(valueSpo2);
+                  
+                lcd.setCursor(5, 1);
+                lcd.print("    ");
+                lcd.setCursor(5, 1);
+                lcd.print(ValueHeartRate);
+                  
+                lcd.setCursor(17, 1);
+                lcd.print("   ");
+                lcd.setCursor(17, 1);
+                lcd.print(ValueSpo2);
+                  
+                lcd.setCursor(5, 2);
+                lcd.print("    ");
+                lcd.setCursor(5, 2);
+                lcd.print(ValueRoomTemp);
+                  
+                lcd.setCursor(15, 2);
+                lcd.print("    ");
+                lcd.setCursor(15, 2);
+                lcd.print(ValueBodyTemp);
+                  
+                lcd.setCursor(5, 3);
+                lcd.print("    ");
+                lcd.setCursor(5, 3);
+                lcd.print(ValueRoomHum);
+                  
+                PostData();
+                StartState = 0;
+                Var = 1;
+            break;
         }
   
 }
