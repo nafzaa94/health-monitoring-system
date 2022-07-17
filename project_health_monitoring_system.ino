@@ -60,7 +60,7 @@ unsigned long timerDelay = 5000;
 
 int StartState = 0;
 
-int Var = 1;
+int Var = 0;
 
 void onBeatDetected()
 {
@@ -88,17 +88,6 @@ void setup() {
   Serial.print("Connected to WiFi network with IP Address: ");
   Serial.println(WiFi.localIP());
 
-  if (!pox.begin()) {
-        Serial.println("FAILED");
-        for(;;);
-    } else {
-        Serial.println("SUCCESS");
-    }
-  pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
- 
-  // Register a callback for the beat detection
-  pox.setOnBeatDetectedCallback(onBeatDetected);
-
   lcd.setCursor(3, 0);
   lcd.print("HEALTH MONITOR");
   lcd.setCursor(0, 1);
@@ -116,9 +105,21 @@ void setup() {
 void loop() {
 
         switch (Var) {
-          case 1:
+          case 0:
+             if (!pox.begin()) {
+                  Serial.println("FAILED");
+                  for(;;);
+              } else {
+                  Serial.println("SUCCESS");
+              }
+            pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
+           
+            // Register a callback for the beat detection
+            pox.setOnBeatDetectedCallback(onBeatDetected);
 
-          pox.setIRLedCurrent(MAX30100_LED_CURR_7_6MA);
+            Var = 1;
+            break;
+          case 1:
            
           pox.update();
       
@@ -181,7 +182,7 @@ void loop() {
                   
                 PostData();
                 StartState = 0;
-                Var = 1;
+                Var = 0;
             break;
         }
   
